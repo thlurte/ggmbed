@@ -68,17 +68,13 @@ print(Embedder.list_supported_models())
 
 ## Benchmarks & Reproducibility
 
-To reproduce the latency, memory footprint (RSS), and quantization accuracy results, run the scripts directly using `uv`:
+To reproduce the latency and memory footprint (RSS) results, run the benchmark script directly using `uv`:
 
 ```bash
-# 1. Run the latency and memory benchmark (automatically manages fastembed dependency)
 uv run --group benchmark python scripts/benchmark.py
-
-# 2. Run the quantization accuracy benchmark
-uv run python scripts/benchmark_accuracy.py
 ```
 
-### Benchmark Results & Visualizations
+### Benchmark Results
 
 Below is the live benchmark comparison measured on Linux (AMD64 CPU):
 
@@ -92,8 +88,8 @@ Below is the live benchmark comparison measured on Linux (AMD64 CPU):
 
 | Metric | ggmbed (GGUF Q8_0) | fastembed (ONNX) | sentence-transformers (PyTorch) |
 | :--- | :---: | :---: | :---: |
-| **Model Load Time** | ⚡ **1,909.7 ms** | 13,488.1 ms *(7.0x slower)* | 20,179.3 ms *(10.5x slower)* |
-| **Peak RAM / Memory** | 🟢 **127.6 MB** | 910.7 MB *(7.1x heavier)* | 785.0 MB *(6.1x heavier)* |
+| **Model Load Time** | **1,909.7 ms** | 13,488.1 ms *(7.0x slower)* | 20,179.3 ms *(10.5x slower)* |
+| **Peak RAM / Memory** | **127.6 MB** | 910.7 MB *(7.1x heavier)* | 785.0 MB *(6.1x heavier)* |
 | **Single Latency (p50)** | **12.32 ms** | 11.91 ms | 3.70 ms |
 | **Single Latency (p95)** | **17.31 ms** | 16.95 ms | 7.66 ms |
 
@@ -117,9 +113,9 @@ Below is the live benchmark comparison measured on Linux (AMD64 CPU):
 
 | Metric | ggmbed (GGUF Q8_0) | fastembed (ONNX) | sentence-transformers (PyTorch) |
 | :--- | :---: | :---: | :---: |
-| **Model Load Time** | ⚡ **1,700.3 ms** | 11,263.5 ms *(6.6x slower)* | 18,336.6 ms *(10.7x slower)* |
-| **Peak RAM / Memory** | 🟢 **111.0 MB** | 351.4 MB *(3.1x heavier)* | 806.2 MB *(7.2x heavier)* |
-| **Single Latency (Mean)** | ⚡ **6.73 ms** | 9.58 ms | 6.14 ms |
+| **Model Load Time** | **1,700.3 ms** | 11,263.5 ms *(6.6x slower)* | 18,336.6 ms *(10.7x slower)* |
+| **Peak RAM / Memory** | **111.0 MB** | 351.4 MB *(3.1x heavier)* | 806.2 MB *(7.2x heavier)* |
+| **Single Latency (Mean)** | **6.73 ms** | 9.58 ms | 6.14 ms |
 | **Single Latency (p50)** | **6.65 ms** | 9.60 ms | 4.95 ms |
 | **Single Latency (p95)** | **9.20 ms** | 12.57 ms | 13.03 ms |
 
@@ -127,30 +123,13 @@ Below is the live benchmark comparison measured on Linux (AMD64 CPU):
 
 | Batch Size | ggmbed (sent/s) | fastembed (sent/s) | sentence-transformers (sent/s) |
 | :---: | :---: | :---: | :---: |
-| **1** | ⚡ **268.0** | 130.2 | 66.1 |
+| **1** | **268.0** | 130.2 | 66.1 |
 | **4** | **220.5** | 252.4 | 230.7 |
 | **8** | **206.6** | 292.2 | 949.7 |
 | **32** | **199.7** | 286.1 | 2,979.9 |
 | **128** | **198.5** | 158.1 | 3,496.5 |
 
-### Quantization Accuracy vs. F32 Baseline
 
-Below is the cosine similarity accuracy comparison of different quantization formats vs the unquantized `F32` baseline, measured over a set of diverse test sentences:
-
-| Quantization | Size (MiniLM) | Cosine Similarity vs. F32 | Status / Recommendation |
-| :--- | :---: | :---: | :--- |
-| **`F32`** | 86.7 MiB | 1.000000 | Baseline |
-| **`F16`** | 43.4 MiB | 1.000000 | Near Lossless |
-| **`Q8_0`** | 23.5 MiB | 0.999659 | **Highly Recommended** (virtually lossless, 3.7x smaller) |
-| **`Q4_0`** | 18.4 MiB | 0.970772 | Not Recommended (noticeable drop in semantic accuracy) |
-
-> 💡 **Tip:** For small embedding models like MiniLM and BGE-small, 8-bit quantization (`Q8_0`) is the absolute sweet spot, retaining **99.96% accuracy** while reducing memory footprint and load times. Lower bit-depths like 4-bit (`Q4_0`) suffer noticeable quality loss due to the small parameter capacity of these architectures.
-
-### Model: lightonai/DenseOn (ModernBERT, CLS Pooling)
-
-We have conducted a detailed evaluation of accuracy loss, file size compression, and CPU inference latency across all 9 quantization formats of the `lightonai/DenseOn` model (ranging from Float32 to 2-bit quantization). 
-
-For detailed tables, recommendation guides, and performance charts, please read the full [DenseOn Quantization & Accuracy Results](docs/dense_on/accuracy_report.md).
 
 ## Advanced: Compile from Source (Hardware Acceleration)
 
