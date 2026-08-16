@@ -6,7 +6,7 @@ import sys
 def get_latest_pypi_version(package_name):
     url = f"https://pypi.org/pypi/{package_name}/json"
     try:
-        req = urllib.request.Request(url, headers={'User-Agent': 'intextus-bump-script'})
+        req = urllib.request.Request(url, headers={'User-Agent': 'ggmbed-bump-script'})
         with urllib.request.urlopen(req) as response:
             data = json.loads(response.read().decode())
             return data["info"]["version"]
@@ -62,7 +62,7 @@ def parse_version(version_str):
         return (0, 0, 0)
 
 def main():
-    package_name = "intextus-embed-ggml"
+    package_name = "ggmbed"
     local_version = get_local_version()
     print(f"Local version in pyproject.toml: {local_version}")
     

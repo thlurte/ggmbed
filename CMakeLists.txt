@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.19...3.30)
-project(intextus_backend LANGUAGES C CXX)
+project(ggmbed_backend LANGUAGES C CXX)
 
 if(POLICY CMP0169)
     cmake_policy(SET CMP0169 OLD)
@@ -32,6 +32,10 @@ set(GGML_NATIVE ON CACHE BOOL "Enable native optimization")
 set(GGML_METAL OFF CACHE BOOL "Disable Metal" FORCE)
 set(LLAMA_METAL OFF CACHE BOOL "Disable Metal" FORCE)
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/build/_deps/llama_cpp-src/CMakeLists.txt")
+    set(FETCHCONTENT_SOURCE_DIR_LLAMA_CPP "${CMAKE_CURRENT_SOURCE_DIR}/build/_deps/llama_cpp-src")
+endif()
+
 FetchContent_Declare(
     llama_cpp
     GIT_REPOSITORY https://github.com/ggml-org/llama.cpp.git
@@ -52,7 +56,7 @@ find_package(nanobind REQUIRED)
 # 4. Define our C++ extension module
 nanobind_add_module(
     _core                         # The name of the module
-    src/intextus/_core.cpp        # Where the C++ source code is
+    src/ggmbed/_core.cpp          # Where the C++ source code is
 )
 
 # 5. Link libraries
@@ -78,4 +82,4 @@ elseif(UNIX)
 endif()
 
 # 6. Tell the build system to drop the finished binary inside your python package folder
-install(TARGETS _core DESTINATION intextus)
+install(TARGETS _core DESTINATION ggmbed)

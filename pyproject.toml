@@ -3,8 +3,8 @@ requires = ["scikit-build-core>=0.5.0", "nanobind>=2.0.0"]
 build-backend = "scikit_build_core.build"
 
 [project]
-name = "intextus-embed-ggml"
-version = "0.1.8"
+name = "ggmbed"
+version = "0.2.0"
 description = "A lightweight, zero-PyTorch GGML/GGUF encoder for generic dense embedding models."
 readme = "README.md"
 requires-python = ">=3.9"
@@ -28,14 +28,15 @@ keywords = [
 ]
 dependencies = [
     "numpy>=1.22.0",
-    "huggingface-hub>=0.16.4"
+    "huggingface-hub>=0.16.4",
+    "tokenizers>=0.13.0"
 ]
 
 [tool.scikit-build]
 cmake.build-type = "Release"
 # This tells scikit-build-core to look inside the 'src' directory for your python packages
-wheel.packages = ["src/intextus"]
-sdist.include = ["src/intextus/*", "CMakeLists.txt"]
+wheel.packages = ["src/ggmbed"]
+sdist.include = ["src/ggmbed/*", "CMakeLists.txt"]
 
 [dependency-groups]
 dev = [

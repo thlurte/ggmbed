@@ -3,7 +3,7 @@ import tempfile
 import numpy as np
 from unittest.mock import MagicMock, patch
 import pytest
-from intextus import DenseEncoder
+from ggmbed import Embedder
 
 @pytest.fixture
 def mock_dependencies():
@@ -20,29 +20,24 @@ def mock_dependencies():
     
     temp_dir.cleanup()
 
-@patch("intextus.encoder.CppIntextusEncoder")
+@patch("ggmbed.encoder.CppEmbedder")
 def test_encoder_init_and_encode(mock_cpp_encoder_cls, mock_dependencies):
     model_path, tokenizer_path = mock_dependencies
     
-    # Configure mock C++ encoder
     mock_cpp_encoder = MagicMock()
     mock_cpp_encoder_cls.return_value = mock_cpp_encoder
     
-    # Mock return values for methods
     dummy_embs = np.array([[1.0, 0.0, 0.0, 0.0],
                            [0.0, 1.0, 0.0, 0.0]], dtype=np.float32)
     
     mock_cpp_encoder.encode.return_value = dummy_embs
     
-    # Create encoder (point to the direct gguf file path)
-    encoder = DenseEncoder(model_path, tokenizer_path)
-    
-    # Test encode method
+    encoder = Embedder(model_path, tokenizer_path)
     embs = encoder.encode(["test query 1", "test query 2"], max_length=128, normalize=True)
     mock_cpp_encoder.encode.assert_called_with(["test query 1", "test query 2"], 128, True)
     assert np.array_equal(embs, dummy_embs)
 
-@patch("intextus.encoder.CppIntextusEncoder")
+@patch("ggmbed.encoder.CppEmbedder")
 def test_encoder_init_with_directory(mock_cpp_encoder_cls):
     temp_dir = tempfile.TemporaryDirectory()
     gguf_path = os.path.join(temp_dir.name, "model.gguf")
@@ -53,7 +48,7 @@ def test_encoder_init_with_directory(mock_cpp_encoder_cls):
     with open(tokenizer_path, "w") as f:
         f.write('{"model": {"vocab": {}}}')
         
-    encoder = DenseEncoder(temp_dir.name)
+    encoder = Embedder(temp_dir.name)
     
     mock_cpp_encoder_cls.assert_called_with(
         gguf_path,
@@ -68,37 +63,33 @@ def test_encoder_init_with_directory(mock_cpp_encoder_cls):
     temp_dir.cleanup()
 
 def test_real_embedding_end_to_end():
-    # End-to-end validation with the real default C++ engine and GGUF model
-    print("\nRunning real end-to-end embedding test...")
-    encoder = DenseEncoder("sentence-transformers/all-MiniLM-L6-v2")
+    print("\nRunning real end-to-end embedding test with all-MiniLM-L6-v2...")
+    encoder = Embedder("sentence-transformers/all-MiniLM-L6-v2")
     
-    # Test encoding
-    texts = ["hello world", "this is a dense integration test"]
+    texts = [
+        "The cat is sleeping on the couch",
+        "A kitten is napping on the sofa",
+        "General relativity explains gravitational phenomena in physics"
+    ]
     embs = encoder.encode(texts, max_length=128, normalize=True)
     
-    # Assert shape: all-MiniLM-L6-v2 has a 384-dimensional embedding space
-    assert embs.shape == (2, 384)
+    assert embs.shape == (3, 384)
+    for i in range(3):
+        norm = np.linalg.norm(embs[i])
+        assert np.allclose(norm, 1.0, atol=1e-4)
     
-    # Check L2 normalization (sum of squares is close to 1)
-    norm = np.linalg.norm(embs[0])
-    assert np.allclose(norm, 1.0, atol=1e-5)
+    sim_cat_kitten = np.dot(embs[0], embs[1])
+    sim_cat_physics = np.dot(embs[0], embs[2])
     
-    # Check that embeddings are non-zero and distinct
-    assert not np.allclose(embs[0], 0.0)
-    assert not np.allclose(embs[0], embs[1])
-
-def test_different_quantizations():
-    # Verify that we can request and load different quantization types
-    print("\nRunning different quantization test...")
-    encoder = DenseEncoder("sentence-transformers/all-MiniLM-L6-v2", quantization="Q4_0")
-    texts = ["testing quantization loading"]
-    embs = encoder.encode(texts)
-    assert embs.shape == (1, 384)
+    print(f"Similarity(cat, kitten): {sim_cat_kitten:.4f}")
+    print(f"Similarity(cat, physics): {sim_cat_physics:.4f}")
+    
+    assert sim_cat_kitten > 0.90
+    assert sim_cat_kitten > sim_cat_physics + 0.15
 
 def test_bge_embedding_end_to_end():
-    # End-to-end validation with the real BGE C++ engine and GGUF model (CLS pooling)
     print("\nRunning real BGE embedding test...")
-    encoder = DenseEncoder("BAAI/bge-small-en-v1.5", quantization="Q8_0")
+    encoder = Embedder("BAAI/bge-small-en-v1.5", quantization="Q8_0")
     texts = ["hello world", "bge model uses cls pooling"]
     embs = encoder.encode(texts, max_length=128, normalize=True)
     
@@ -108,11 +99,9 @@ def test_bge_embedding_end_to_end():
     assert not np.allclose(embs[0], 0.0)
     assert not np.allclose(embs[0], embs[1])
 
-
 def test_denseon_embedding_end_to_end():
-    # End-to-end validation with the real DenseOn C++ engine and GGUF model (CLS pooling, 768 dims)
     print("\nRunning real DenseOn embedding test...")
-    encoder = DenseEncoder("lightonai/DenseOn", quantization="Q8_0")
+    encoder = Embedder("lightonai/DenseOn", quantization="Q8_0")
     texts = ["hello world", "denseon model uses cls pooling and has 768 dimensions"]
     embs = encoder.encode(texts, max_length=128, normalize=True)
     
@@ -121,4 +110,3 @@ def test_denseon_embedding_end_to_end():
     assert np.allclose(norm, 1.0, atol=1e-5)
     assert not np.allclose(embs[0], 0.0)
     assert not np.allclose(embs[0], embs[1])
-

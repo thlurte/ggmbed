@@ -1,5 +1,5 @@
 import numpy as np
-from intextus import DenseEncoder
+from ggmbed import GGMBedEncoder, DenseEncoder
 
 SENTENCES = [
     "Dense embeddings represent semantic meaning in a vector space.",

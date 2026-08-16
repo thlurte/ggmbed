@@ -6,7 +6,7 @@ import argparse
 import numpy as np
 import matplotlib.pyplot as plt
 from typing import List, Dict
-from intextus import DenseEncoder
+from ggmbed import GGMBedEncoder, DenseEncoder
 
 # Diverse evaluation sentences across multiple domains
 EVAL_SENTENCES = [
@@ -84,8 +84,11 @@ def run_isolated_evaluation(quant: str):
         
     # Get model file size
     import glob
-    cache_dir = os.path.expanduser("~/.cache/huggingface/hub/models--intextus--DenseOn-GGUF/snapshots/*")
+    cache_dir = os.path.expanduser("~/.cache/huggingface/hub/models--thlurte--DenseOn-GGUF/snapshots/*")
     quant_files = glob.glob(os.path.join(cache_dir, f"DenseOn-{quant}.gguf"))
+    if not quant_files:
+        cache_dir_legacy = os.path.expanduser("~/.cache/huggingface/hub/models--intextus--DenseOn-GGUF/snapshots/*")
+        quant_files = glob.glob(os.path.join(cache_dir_legacy, f"DenseOn-{quant}.gguf"))
     size_mb = 0.0
     if quant_files:
         size_mb = os.path.getsize(quant_files[0]) / (1024 * 1024)
