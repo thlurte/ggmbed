@@ -124,6 +124,7 @@ class Embedder:
             try:
                 from tokenizers import Tokenizer
                 self._hf_tokenizer = Tokenizer.from_file(tokenizer_path)
+                self._hf_tokenizer.no_padding()
             except Exception:
                 self._hf_tokenizer = None
 
@@ -214,15 +215,10 @@ class Embedder:
             batch_seqs = []
             for t in texts:
                 encoding = self._hf_tokenizer.encode(t)
-                ids = encoding.ids
-                seq = [self.cls_token_id]
-                for tid in ids:
-                    if tid != self.cls_token_id and tid != self.sep_token_id:
-                        seq.append(tid)
-                if len(seq) >= max_length:
-                    seq = seq[:max_length - 1]
-                seq.append(self.sep_token_id)
-                batch_seqs.append(seq)
+                ids = list(encoding.ids)
+                if len(ids) > max_length:
+                    ids = ids[:max_length]
+                batch_seqs.append(ids)
             return self._encoder.encode_tokens(batch_seqs, normalize)
             
         return self._encoder.encode(texts, max_length, normalize)

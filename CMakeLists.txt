@@ -55,9 +55,11 @@ find_package(nanobind REQUIRED)
 
 # 4. Define our C++ extension module
 nanobind_add_module(
-    _core                         # The name of the module
-    src/ggmbed/_core.cpp          # Where the C++ source code is
+    _core
+    src/ggmbed/embedder.cpp
+    src/ggmbed/bindings.cpp
 )
+target_include_directories(_core PRIVATE src/ggmbed)
 
 # 5. Link libraries
 target_link_libraries(_core PRIVATE llama)

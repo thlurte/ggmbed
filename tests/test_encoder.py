@@ -84,8 +84,9 @@ def test_real_embedding_end_to_end():
     print(f"Similarity(cat, kitten): {sim_cat_kitten:.4f}")
     print(f"Similarity(cat, physics): {sim_cat_physics:.4f}")
     
-    assert sim_cat_kitten > 0.90
-    assert sim_cat_kitten > sim_cat_physics + 0.15
+    assert sim_cat_kitten > 0.70
+    assert sim_cat_physics < 0.10
+    assert sim_cat_kitten > sim_cat_physics + 0.50
 
 def test_bge_embedding_end_to_end():
     print("\nRunning real BGE embedding test...")
@@ -110,3 +111,25 @@ def test_denseon_embedding_end_to_end():
     assert np.allclose(norm, 1.0, atol=1e-5)
     assert not np.allclose(embs[0], 0.0)
     assert not np.allclose(embs[0], embs[1])
+
+def test_pytorch_numerical_equivalence():
+    try:
+        from sentence_transformers import SentenceTransformer
+    except ImportError:
+        pytest.skip("sentence_transformers not installed")
+        
+    st_model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
+    gg_model = Embedder("sentence-transformers/all-MiniLM-L6-v2")
+    
+    sentences = [
+        "The quick brown fox jumps over the lazy dog.",
+        "Quantum mechanics is a fundamental branch of physics.",
+        "Deep neural networks learn distributed representations."
+    ]
+    st_embs = st_model.encode(sentences, normalize_embeddings=True)
+    gg_embs = gg_model.encode(sentences, normalize=True)
+    
+    for i in range(len(sentences)):
+        cosine_sim = np.dot(gg_embs[i], st_embs[i])
+        print(f"Sentence {i+1} alignment with PyTorch: {cosine_sim:.5f}")
+        assert cosine_sim > 0.999, f"Sentence {i+1} alignment {cosine_sim:.5f} is below 0.999"
